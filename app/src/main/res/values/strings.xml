@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">SecurityOilApp</string>
+    <string name="mainMenu">Menú Principal</string>
+    <string name="signOff">Cerrar Sesión</string>
+    <string name="txt_reports">Reporte de Novedades</string>
+    <string name="txt_work_accident">Accidente Laboral</string>
+    <string name="txt_insecure_act">Acto Inseguro</string>
+    <string name="txt_epp">EPP</string>
+    <string name="txt_tools">Herramientas</string>
+    <string name="txt_machine">Maquinaria</string>
+    <string name="txt_enviroment">Ambiental</string>
+    <string name="btn_save">Guardar</string>
+</resources>
