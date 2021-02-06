@@ -22,7 +22,6 @@
         android:id="@+id/reportes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
         android:onClick="reports"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/button"
@@ -40,7 +39,7 @@
                 android:textColor="@color/white"
                 android:textStyle="bold"
                 android:layout_centerInParent="true"
-                android:text="Configuraciones"/>
+                android:text="Estadisticas"/>
 
         </RelativeLayout>
 
