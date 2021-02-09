@@ -3,4 +3,20 @@
     <external-path
         name="my_images"
         path="Android/data/com.example.myapplication/files/Pictures"/>
+
+    <external-path
+        name="external"
+        path="." />
+    <external-files-path
+        name="external_files"
+        path="." />
+    <cache-path
+        name="cache"
+        path="." />
+    <external-cache-path
+        name="external_cache"
+        path="." />
+    <files-path
+        name="files"
+        path="." />
 </paths>

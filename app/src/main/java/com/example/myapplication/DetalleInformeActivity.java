@@ -2,19 +2,29 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
@@ -25,11 +35,13 @@ import com.itextpdf.kernel.pdf.PdfDocumentInfo;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.LineSeparator;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Text;
 import com.itextpdf.layout.property.TextAlignment;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,6 +49,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 public class DetalleInformeActivity extends AppCompatActivity {
 
@@ -50,6 +63,8 @@ public class DetalleInformeActivity extends AppCompatActivity {
     Context mContext;
 
     String dest;
+    String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +73,6 @@ public class DetalleInformeActivity extends AppCompatActivity {
 
         mContext = getApplicationContext();
 
-        String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm";
 
 
         File path = new File(
@@ -70,15 +84,14 @@ public class DetalleInformeActivity extends AppCompatActivity {
 
 
 
-        File dir = new File(android.os.Environment.getExternalStorageDirectory()
-                + File.separator
-                + "pdf"
-                + File.separator);
+        File dir = new File(android.os.Environment.getExternalStorageDirectory(), "pdfs");
         if (!dir.exists()) {
             dir.mkdir();
         }
 
-        dest = getAppPath(mContext) + new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) +".pdf";
+        File file = new File(dir,new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) +".pdf");
+
+        dest = file.getPath() ;
 
 
         informe = (Informe) getIntent().getExtras().get("informe");
@@ -104,8 +117,28 @@ public class DetalleInformeActivity extends AppCompatActivity {
 
         Button button = findViewById(R.id.crearpdf);
 
-        button.setOnClickListener(v ->{
-            createPdf(dest);
+
+        //Este handler será ejecutado 5 segundos después.
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+
+            };
+        }, 2000);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                createPdf(dest);
+                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+                File file = new File(dest);
+
+                Uri uri =  FileProvider.getUriForFile(getApplicationContext(),
+                        "com.example.android.fileprovider",
+                        file);
+                sharingIntent.setType("text/plain");
+                sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                startActivity(sharingIntent);
+            }
         });
 
 
@@ -126,6 +159,9 @@ public class DetalleInformeActivity extends AppCompatActivity {
             PdfWriter pdfWriter = new PdfWriter(new FileOutputStream(dest));
             PdfDocument pdfDocument = new PdfDocument(pdfWriter);
             PdfDocumentInfo info = pdfDocument.getDocumentInfo();
+
+            SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+            String dateString = formatter.format(new Date(informe.getDate()));
 
             Log.d("meejecuto", "meejecuto");
 
@@ -153,6 +189,31 @@ public class DetalleInformeActivity extends AppCompatActivity {
             // LINE SEPARATOR
             LineSeparator lineSeparator = new LineSeparator(new DottedLine());
             lineSeparator.setStrokeColor(new DeviceRgb(0, 0, 68));
+
+            //foto informe
+
+            File carpeta = new File(android.os.Environment.getExternalStorageDirectory(), "fotosinforme");
+            if (!carpeta.exists()) {
+                carpeta.mkdir();
+            }
+            File file = new File(carpeta,new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) +".pdf");
+            file.createNewFile();
+
+
+            //Convert bitmap to byte array
+            Bitmap bitmap = ((BitmapDrawable)foto.getDrawable()).getBitmap();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+            byte[] bitmapdata = bos.toByteArray();
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(bitmapdata);
+            fos.flush();
+            fos.close();
+
+            ImageData data = ImageDataFactory.create(file.getPath());
+            Image img = new Image(data);
+            document.add(img);
 
             // Title Order Details...
             // Adding Title....
@@ -183,7 +244,7 @@ public class DetalleInformeActivity extends AppCompatActivity {
             Paragraph mOrderDateParagraph = new Paragraph(mOrderDateChunk);
             document.add(mOrderDateParagraph);
 
-            Text mOrderDateValueChunk = new Text(informe.getDate().toString()).setFont(font).setFontSize(mValueFontSize).setFontColor(mColorBlack);
+            Text mOrderDateValueChunk = new Text(dateString).setFont(font).setFontSize(mValueFontSize).setFontColor(mColorBlack);
             Paragraph mOrderDateValueParagraph = new Paragraph(mOrderDateValueChunk);
             document.add(mOrderDateValueParagraph);
 
@@ -206,8 +267,7 @@ public class DetalleInformeActivity extends AppCompatActivity {
 
             document.close();
 
-            Toast.makeText(mContext, "Created... :)", Toast.LENGTH_SHORT).show();
-
+            Toast.makeText(mContext, "Creado... :)", Toast.LENGTH_SHORT).show();
 
         } catch (IOException e) {
 
